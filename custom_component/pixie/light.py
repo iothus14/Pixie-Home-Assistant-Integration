@@ -8,6 +8,7 @@ from homeassistant.helpers import config_validation as cv, entity_platform, serv
 from homeassistant.const import CONF_DEVICE_ID, CONF_ICON, CONF_NAME
 from homeassistant.core import HomeAssistant, HomeAssistantError, callback
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.components import mqtt
 from homeassistant.components.light import (
     ATTR_RGB_COLOR,
@@ -28,6 +29,7 @@ from homeassistant.components.light import (
 
 
 from .const import (
+    DOMAIN,
     CONF_CHANNEL,
     PIXIE_ATTR_STATE,
     PIXIE_ATTR_TRANSITION_NAME,
@@ -60,22 +62,41 @@ PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend({
 
 async def async_setup_platform(hass, config, async_add_entities, discovery_info=None):
     """Set up the Pixie Light platform."""
-    light = PixieLight(hass, config)
 
+    hass.async_create_task(
+        hass.config_entries.flow.async_init(
+            DOMAIN, context={"source": SOURCE_IMPORT}, data=dict(config)
+        )
+    )
+
+
+async def async_setup_entry(hass, config_entry, async_add_entities):
+    """Add a Foscam IP camera from a config entry."""
+    #platform = entity_platform.async_get_current_platform()
+
+    light = PixieLight(hass, config_entry)
+    
     # Add devices
     async_add_entities([light], True)
-
 
 
 class PixieLight(LightEntity):
     """Representation of a Pixie Light."""
 
-    def __init__(self, hass, config):
+    def __init__(self, hass, config_entry):
         """Initialize a PixieLight."""
         self.hass = hass
-        self._name = config[CONF_NAME]
-        if config[CONF_NAME] == "":
-            self._name = "pixie_" + config[CONF_DEVICE_ID] + "_" + str(config[CONF_CHANNEL])
+        create_name = False
+        if CONF_NAME in config_entry.data:
+            if config_entry.data[CONF_NAME] == "":
+                create_name = True
+            else:
+                self._name = config_entry.data[CONF_NAME]
+        else:
+            create_name = True
+
+        if create_name:
+            self._name = "pixie_" + config_entry.data[CONF_DEVICE_ID] + "_" + str(config_entry.data[CONF_CHANNEL])
         self._state = False
         self._brightness = 255
         self._color_mode = COLOR_MODE_RGB
@@ -85,11 +106,14 @@ class PixieLight(LightEntity):
         self._parameter2 = 0
         self._picture = ""
         self._rgb = (255, 255, 255)
-        self._device_id = config[CONF_DEVICE_ID]
-        self._channel = config[CONF_CHANNEL]
+        self._available = False
+        self._device_id = config_entry.data[CONF_DEVICE_ID]
+        self._channel = config_entry.data[CONF_CHANNEL]
+        self._unique_id = config_entry.entry_id
 
         self.qos = 0
         self.retain = False
+        self.availability_topic = "pixie_" + self._device_id + "/status"
         self.command_topic = "pixie_" + self._device_id + "/channel" + str(self._channel) + "/set"
         self.channel_topic = "pixie_" + self._device_id + "/channel" + str(self._channel)
         self.all_channels_topic = "pixie_" + self._device_id + "/channel"
@@ -150,6 +174,13 @@ class PixieLight(LightEntity):
         """Subscribe to MQTT events."""
 
         @callback
+        async def availability_received(msg):
+            if msg.payload == "online":
+                self._available = True
+            else:
+                self._available = False
+
+        @callback
         async def message_received(msg):
             """Run when new MQTT message has been received."""
 
@@ -184,6 +215,8 @@ class PixieLight(LightEntity):
                 self._white_value = int(data["white_value"])
         
             self.async_write_ha_state()
+
+        await mqtt.async_subscribe( self.hass, self.availability_topic, availability_received, self.qos )
 
         _LOGGER.info("Subscribe topic %s", self.channel_topic)
         return await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
@@ -360,12 +393,18 @@ class PixieLight(LightEntity):
         )
 
     @property
+    def unique_id(self):
+        """Return the entity unique ID."""
+        return self._unique_id
+
+    @property
     def name(self):
         """Return the display name of this light."""
         return self._name
 
     @property
     def brightness(self):
+        """Return brightness"""
         return self._brightness
 
     @property
@@ -380,10 +419,12 @@ class PixieLight(LightEntity):
 
     @property
     def parameter1(self):
+        """Return parameter1 which is used to adjust effects/pictures/transitions"""
         return self._parameter1
 
     @property
     def parameter2(self):
+        """Return parameter2 which is used to adjust effects/pictures/transitions"""
         return self._parameter2
 
     @property
@@ -427,3 +468,8 @@ class PixieLight(LightEntity):
     def color_mode(self):
         """Return the color mode of the light."""
         return self._color_mode
+
+    @property
+    def available(self):
+        """Return the availability of the light."""
+        return self._available

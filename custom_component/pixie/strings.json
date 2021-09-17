@@ -1,0 +1,23 @@
+{
+  "config": {
+    "step": {
+      "config": {
+        "title": "Pixie",
+        "description": "Pixie device configuration",
+        "data": {
+          "device_id": "[%key:common::config_flow::data::device_id%]",
+          "channel": "[%key:common::config_flow::data::channel%]"
+        }
+      }
+    },
+    "abort": {
+      "single_instance_allowed": "[%key:common::config_flow::abort::single_instance_allowed%]",
+      "already_configured": "The device is already configured"
+    },
+    "error": {
+      "wrong_device_id": "The specified device_id is incorrect",
+      "wrong_channel": "The specified channel is incorrect. It must be 0, 1, 2 or 3."
+    }
+  },
+  "title": "Pixie LED Controller"
+}
