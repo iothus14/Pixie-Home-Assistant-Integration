@@ -5,7 +5,7 @@ import json
 import voluptuous as vol
 
 from homeassistant.helpers import config_validation as cv, entity_platform, service
-from homeassistant.const import CONF_DEVICE_ID, CONF_ICON, CONF_NAME
+from homeassistant.const import CONF_ICON, CONF_NAME
 from homeassistant.core import HomeAssistant, HomeAssistantError, callback
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.config_entries import SOURCE_IMPORT
@@ -30,6 +30,7 @@ from homeassistant.components.light import (
 
 from .const import (
     DOMAIN,
+    CONF_DEVICE_ID,
     CONF_CHANNEL,
     PIXIE_ATTR_STATE,
     PIXIE_ATTR_TRANSITION_NAME,
@@ -71,7 +72,7 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    """Add a Foscam IP camera from a config entry."""
+    """Add a pixie light from a config entry."""
     #platform = entity_platform.async_get_current_platform()
 
     light = PixieLight(hass, config_entry)
@@ -214,11 +215,18 @@ class PixieLight(LightEntity):
             if "white_value" in data:
                 self._white_value = int(data["white_value"])
         
+            if "picture" in data:
+                self._picture = data["picture"]
+
+            if "effect" in data:
+                self._effect = data["effect"]
+
             self.async_write_ha_state()
 
+        _LOGGER.info("Subscribe to the topic %s", self.availability_topic)
         await mqtt.async_subscribe( self.hass, self.availability_topic, availability_received, self.qos )
 
-        _LOGGER.info("Subscribe topic %s", self.channel_topic)
+        _LOGGER.info("Subscribe to the topic %s", self.channel_topic)
         return await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
 
 
@@ -280,8 +288,16 @@ class PixieLight(LightEntity):
     async def async_set_effect(self, **kwargs):
         """Set an effect of a Pixie light."""
         message = {"state": "ON"}
+    
+        if PIXIE_ATTR_EFFECT not in kwargs:
+            _LOGGER.warning("An effect must be specified to run the service pixie.set_effect")
+            return
 
         message["effect"] = kwargs[PIXIE_ATTR_EFFECT]
+
+        if message["effect"] not in PIXIE_EFFECT_LIST:
+            _LOGGER.warning("The specified effect %s is not supported. The effect is ignored.", message["effect"])
+            return
 
         if PIXIE_ATTR_PARAMETER1 in kwargs:
             message["parameter1"] = min( kwargs[PIXIE_ATTR_PARAMETER1], 255 )
@@ -300,6 +316,7 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
 
+        _LOGGER.debug("Send a json %s to the topic %s", json.dumps(message), self.command_topic)
         mqtt.async_publish(
             self.hass,
             self.command_topic,
