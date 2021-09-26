@@ -12,6 +12,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.components import mqtt
 
 from .const import (
+    DOMAIN,
     CONF_DEVICE_ID,
     CONF_CHANNEL,
     PIXIE_ATTR_PICTURE,
