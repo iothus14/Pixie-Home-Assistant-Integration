@@ -102,7 +102,7 @@ This example show how to display a static effect. In this case it runs "Rainbow"
 service: pixie.set_pixture
 data:
   entity_id: light.pixie_abcdef_0
-  effect: "Rainbow"
+  picture: "Rainbow"
   parameter1: 200
   parameter2: 120
   brightness: 200
