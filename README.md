@@ -12,11 +12,35 @@ Find the Pixie integration in HACS and install it. If you haven't installed HACS
 
 #### Manual installation
 Copy the sub-path `/custom_components/pixie` of this repo into the path /config/custom_components/pixie of your HA installation.
-
+The next step is to create a pixie entity in `configuration.yaml`. 
 
 ### Configuration
- Every pixie device has its own unique ID which will be used to configure the device in Home Assistant. A Pixie controller has 4 independent hardware channels 
-to controll addressable LED strips. Every channel can be configured separately with this integration.
+
+Every pixie device has its own unique ID which will be used to configure the device in Home Assistant. A Pixie controller has 4 independent hardware channels 
+to controll addressable LED strips. Every channel can be configured separately.
+
+#### Manual configuration
+A pixie configuration can be added manually to the `configuration.yaml` file like this:
+
+```
+light:
+  - platform: pixie
+    name: "My Pixie Light"
+    device_id: abcdef
+    channel: 0
+```
+Configuration variables:
+| Variable | Type | Optional | Description |
+|----------|------|----------|-------------|
+| **platform** | *pixie* | No | Always must be pixie |
+| **name** | *String* | Yes | A friendly name of the light |
+| **device_id** | *String* | No | A unique id of the pixie device |
+| **channel** | *Number* | No | A number of channel which this configuration describes. Valid values are 0, 1, 2, 3 |
+
+#### UI configuration
+
+This describes how to configure a pixie device vie Home Assistant Integration:
+
  1. Open "Configuration" -> "Integration" in your Home Assistant instance.
  2. Click the button "+ADD INTEGRATION".
  3. In the window "Set up a new integration" type ***Pixie*** and run the configuration process by clicking on the found item of the list "Pixie LED Controller".
@@ -67,9 +91,9 @@ This service runs a static effect on the LED strip.
 |Service data attribute    | Optional  | Description                        |
 |--------------------------|-----------|------------------------------------|
 | **entity_id**            | No        | Entity Id of a pixie device.        |
-| **effect**               | No        | One of the supported static effects. Please check the documentation for the supported effects. |
-| **parameter1**           | Yes       | Valid value is in the range 0..255. |
-| **parameter2**           | Yes       | Valid value is in the range 0..255. |
+| **picture**              | No        | One of the supported static effects. Please check the documentation for the supported effects. |
+| **parameter1**           | Yes       | Valid value is in the range 0..255 if parameter1 is applicable to the picture. Otherwise it will be ignored.  |
+| **parameter2**           | Yes       | Valid value is in the range 0..255 if parameter2 is applicable to the picture. Otherwise it will be ignored. |
 | **color**                | Yes       | A list containing three integers between 0 and 255 representing the RGB color if the effect supports a color as an input parameter. |
 | **brightness**           | Yes       | The brightness value to set (1..255). |
 
@@ -85,25 +109,46 @@ data:
 ```
 
 
-#### pixie.turn_on_transition
+### Service pixie.turn_on_transition
 
 This service is very similar to `light.turn_on` which can be also used with a pixie device but `pixie.turn_on_transition` has extra parameters allowing to turn on the LED strip with the supported transitions and parameters to adjust them.
+
+|Service data attribute    | Optional  | Description                        |
+|--------------------------|-----------|------------------------------------|
+| **entity_id**            | No        | Entity Id of a pixie device.        |
+| **transition_name**      | No        | One of the supported transition effects. Please check the documentation for the supported effects. |
+| **transition**           | No        | Time is seconds for how long the transition effect will last |
+| **parameter1**           | Yes       | Valid value is in the range 0..255 if parameter1 is applicable to the picture. Otherwise it will be ignored.  |
+| **parameter2**           | Yes       | Valid value is in the range 0..255 if parameter2 is applicable to the picture. Otherwise it will be ignored. |
+| **color**                | No        | A list containing three integers between 0 and 255 representing the RGB color |
+| **brightness**           | Yes       | The brightness value to set (1..255). |
+
+Here is an example to turn on the light `light.pixie_abcdef_0` with the RGB color [128, 255, 0] for 30 seconds with a transition effect "SinIn"
 
 ```
 service: pixie.turn_on_transition
 data:
   entity_id: light.pixie_abcdef_0
   transition_name: "SinIn"
-  transition: 5
-  parameter1: 200
-  parameter2: 120
+  transition: 30
   brightness: 200
   color: [128, 255, 0]
 ```
 
-#### pixie.turn_off_transition
+### Service pixie.turn_off_transition
 
 This service is very similar to `light.turn_off` which can be also used with a pixie device but `pixie.turn_off_transition` has extra parameters allowing to turn off the LED strip with the supported transitions and parameters to adjust them.
+
+|Service data attribute    | Optional  | Description                        |
+|--------------------------|-----------|------------------------------------|
+| **entity_id**            | No        | Entity Id of a pixie device.        |
+| **transition_name**      | No        | One of the supported transition effects. Please check the documentation for the supported effects. |
+| **transition**           | No        | Time is seconds for how long the transition effect will last |
+| **parameter1**           | Yes       | Valid value is in the range 0..255 if parameter1 is applicable to the transition effect. Otherwise it will be ignored.  |
+| **parameter2**           | Yes       | Valid value is in the range 0..255 if parameter2 is applicable to the transition effect. Otherwise it will be ignored. |
+
+
+Here is an example to turn off the light `light.pixie_abcdef_0` for 30 seconds with a transition effect "SinOut"
 
 ```
 service: pixie.turn_off_transition
@@ -111,8 +156,6 @@ data:
   entity_id: light.pixie_abcdef_0
   transition_name: "SinOut"
   transition: 5
-  parameter1: 200
-  parameter2: 120
-  brightness: 200
-  color: [128, 255, 0]
 ```
+
+Please check the documentation regarding all supported animations, pictures and transitions.
