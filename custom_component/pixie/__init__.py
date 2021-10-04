@@ -4,7 +4,7 @@ import logging
 
 from homeassistant.components.light import DOMAIN as LIGHT_DOMAIN
 from homeassistant.components.select import DOMAIN as SELECT_DOMAIN
-#from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
+from homeassistant.components.sensor import DOMAIN as SENSOR_DOMAIN
 
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant, callback
@@ -32,7 +32,7 @@ from .const import (
     PIXIE_TRANSITION_LIST,
 )
 
-PLATFORMS = (LIGHT_DOMAIN, SELECT_DOMAIN)
+PLATFORMS = (LIGHT_DOMAIN, SELECT_DOMAIN, SENSOR_DOMAIN)
 
 _LOGGER = logging.getLogger(__name__)
 

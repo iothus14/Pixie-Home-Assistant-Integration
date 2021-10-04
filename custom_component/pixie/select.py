@@ -115,6 +115,7 @@ class PixiePictureSelect(SelectEntity):
 
     async def async_select_option(self, option: str):
         """Change the selected option."""
+        _LOGGER.warning("Pixie Select Picture does not support a select option.")
         return
 
 

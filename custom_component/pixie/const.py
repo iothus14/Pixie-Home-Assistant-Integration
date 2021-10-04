@@ -14,6 +14,8 @@ PIXIE_ATTR_EFFECT = "effect"
 PIXIE_ATTR_PARAMETER1 = "parameter1"
 PIXIE_ATTR_PARAMETER2 = "parameter2"
 PIXIE_ATTR_BRIGHTNESS = "brightness"
+PIXIE_ATTR_BOARD_TEMPERATURE = "board_temperature"
+PIXIE_ATTR_UPTIME = "uptime"
 
 # Services
 SERVICE_SET_EFFECT = "set_effect"
