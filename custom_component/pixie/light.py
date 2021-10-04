@@ -180,6 +180,7 @@ class PixieLight(LightEntity):
                 self._available = True
             else:
                 self._available = False
+            self.async_write_ha_state()
 
         @callback
         async def message_received(msg):
