@@ -64,9 +64,9 @@ class PixieBoardTemperatureSensor(SensorEntity):
         @callback
         async def availability_received(msg):
             if msg.payload == "online":
-                self._available = True
+                self._attr_available = True
             else:
-                self._available = False
+                self._attr_available = False
 
             self.async_write_ha_state()
 
@@ -124,9 +124,9 @@ class PixieUptimeSensor(SensorEntity):
         @callback
         async def availability_received(msg):
             if msg.payload == "online":
-                self._available = True
+                self._attr_available = True
             else:
-                self._available = False
+                self._attr_available = False
 
             self.async_write_ha_state()
 
