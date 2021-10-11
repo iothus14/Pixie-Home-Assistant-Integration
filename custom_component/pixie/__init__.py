@@ -11,6 +11,7 @@ from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_registry import async_migrate_entries
 from homeassistant.components import mqtt
 
+from .coordinator import PixieCoordinator
 from .const import (
     DOMAIN,
     CONF_DEVICE_ID,
@@ -42,6 +43,9 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
 
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
+
+    coordinator = PixieCoordinator(hass, entry)
+    hass.data[DOMAIN]["coordinator"] = coordinator
 
     return True
 

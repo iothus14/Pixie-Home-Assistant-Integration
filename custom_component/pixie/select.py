@@ -24,92 +24,14 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
-    coordinator = PixieSelectCoordinator(hass, config_entry)
+    #coordinator = PixieSelectCoordinator(hass, config_entry)
 
+    coordinator = hass.data[DOMAIN]["coordinator"]
     select_picture = PixiePictureSelect(coordinator)
     select_effect = PixieEffectSelect(coordinator)
 
     # Add devices
     async_add_entities([select_picture, select_effect], True)
-
-
-class PixieSelectCoordinator:
-    def __init__(self, hass, config_entry):
-        self.hass = hass
-        self._picture = None
-        self._effect = None
-        self._available = False
-        self._device_id = config_entry.data[CONF_DEVICE_ID]
-        self._channel = config_entry.data[CONF_CHANNEL]
-
-        self.qos = 0
-        self.retain = False
-        self.availability_topic = f"pixie_{self._device_id}/status"
-        self.channel_topic = f"pixie_{self._device_id}/channel{self._channel}"
-        self.command_topic = f"pixie_{self._device_id}/channel{self._channel}/set"
-
-        self._state_update_callback = None
-
-    def set_state_update_callback(self, callback=None):
-        self._state_update_callback = callback
-
-    async def async_mqtt_handler(self):
-        """Subscribe to MQTT events."""
-        @callback
-        async def availability_received(msg):
-            if msg.payload == "online":
-                self._available = True
-            else:
-                self._available = False
-            
-            if self._state_update_callback != None:
-                self._state_update_callback()
-
-
-        @callback
-        async def message_received(msg):
-            """Run when new MQTT message has been received."""
-
-            _LOGGER.debug("MQTT message received: %s", msg.payload)
-            try:
-                data = json.loads(msg.payload)
-            except vol.MultipleInvalid as error:
-                _LOGGER.debug("Skipping update because of malformatted data: %s", error)
-                return
-
-            if PIXIE_ATTR_PICTURE in data:
-                self._picture = data[PIXIE_ATTR_PICTURE]
-            else:
-                self._picture = None
-
-            if PIXIE_ATTR_EFFECT in data:
-                self._effect = data[PIXIE_ATTR_EFFECT]
-            else:
-                self._effect = None
-
-            if self._state_update_callback != None:
-                self._state_update_callback()
-
-        _LOGGER.info("Subscribe to the topic %s", self.availability_topic)
-        await mqtt.async_subscribe( self.hass, self.availability_topic, availability_received, self.qos )
-
-        _LOGGER.info("Subscribe to the topic %s", self.channel_topic)
-        return await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
-
-    def device_id(self):
-        return self._device_id
-
-    def channel(self):
-        return self._channel
-
-    def available(self):
-        return self._available
-
-    def picture(self):
-        return self._picture
-
-    def effect(self):
-        return self._effect
 
 
 class PixiePictureSelect(SelectEntity):
@@ -129,7 +51,7 @@ class PixiePictureSelect(SelectEntity):
 
     async def async_added_to_hass(self):
         """Subscribe to MQTT events."""
-        self._coordinator.set_state_update_callback(self.state_update_callback)
+        self._coordinator.picture_select_callback(self.state_update_callback)
         await self._coordinator.async_mqtt_handler()
 
     @property
@@ -171,7 +93,7 @@ class PixieEffectSelect(SelectEntity):
 
     async def async_added_to_hass(self):
         """Subscribe to MQTT events."""
-        self._coordinator.set_state_update_callback(self.state_update_callback)
+        self._coordinator.effect_select_callback(self.state_update_callback)
         await self._coordinator.async_mqtt_handler()
 
     @property

@@ -29,8 +29,9 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry( hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback ):
     """Set up Pixie sensors"""
 
-    board_temperature_sensor = PixieBoardTemperatureSensor(hass, config_entry)
-    uptime_sensor = PixieUptimeSensor(hass, config_entry)
+    coordinator = hass.data[DOMAIN]["coordinator"]
+    board_temperature_sensor = PixieBoardTemperatureSensor(coordinator)
+    uptime_sensor = PixieUptimeSensor(coordinator)
 
     sensors = [ board_temperature_sensor, uptime_sensor ]
 
@@ -45,57 +46,30 @@ class PixieBoardTemperatureSensor(SensorEntity):
     _attr_icon = "mdi:thermometer"
     _attr_entity_registry_enabled_default = False
 
-    def __init__(self, hass, config_entry):
-        self._device_id = config_entry.data[CONF_DEVICE_ID]
-        self._channel = config_entry.data[CONF_CHANNEL]
+    def __init__(self, coordinator):
+        self._coordinator = coordinator
+        self._device_id = coordinator.device_id()
+        self._channel = coordinator.channel()
         self._attr_name = f"Pixie {self._device_id} {self._channel} Board Temperature"
         self._attr_unique_id = f"pixie_{self._device_id}_{self._channel}_board_temperature"
 
-        self._board_temperature = None
-
-        self.qos = 0
-        self.retain = False
-        self.availability_topic = f"pixie_{self._device_id}/status"
-        self.attribute_topic = f"pixie_{self._device_id}/attributes"
+    def state_update_callback(self):
+        self.async_write_ha_state()
 
     async def async_added_to_hass(self):
         """Subscribe to MQTT events."""
-
-        @callback
-        async def availability_received(msg):
-            if msg.payload == "online":
-                self._attr_available = True
-            else:
-                self._attr_available = False
-
-            self.async_write_ha_state()
-
-        @callback
-        async def message_received(msg):
-            """Run when new MQTT message has been received."""
-
-            _LOGGER.debug("MQTT message received: %s", msg.payload)
-            try:
-                data = json.loads(msg.payload)
-            except vol.MultipleInvalid as error:
-                _LOGGER.debug("Skipping update because of malformatted data: %s", error)
-                return
-
-            if PIXIE_ATTR_BOARD_TEMPERATURE in data:
-                self._board_temperature = data[PIXIE_ATTR_BOARD_TEMPERATURE]
-
-            self.async_write_ha_state()
-
-        _LOGGER.info("Subscribe to the topic %s", self.availability_topic)
-        await mqtt.async_subscribe( self.hass, self.availability_topic, availability_received, self.qos )
-
-        _LOGGER.info("Subscribe to the topic %s", self.attribute_topic)
-        return await mqtt.async_subscribe( self.hass, self.attribute_topic, message_received, self.qos )
+        self._coordinator.board_temp_sensor_callback(self.state_update_callback)
+        await self._coordinator.async_mqtt_handler()
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self._board_temperature
+        return self._coordinator.board_temperature()
+
+    @property
+    def available(self):
+        """Return the availability of the sensor."""
+        return self._coordinator.available()
 
 
 class PixieUptimeSensor(SensorEntity):
@@ -104,58 +78,28 @@ class PixieUptimeSensor(SensorEntity):
     _attr_entity_registry_enabled_default = False
     _attr_icon = "mdi:clock-outline"
 
-    def __init__(self, hass, config_entry):
-        """Initialize a Pixie uptime sensor."""
-        self._device_id = config_entry.data[CONF_DEVICE_ID]
-        self._channel = config_entry.data[CONF_CHANNEL]
+    def __init__(self, coordinator):
+        self._coordinator = coordinator
+        self._device_id = coordinator.device_id()
+        self._channel = coordinator.channel()
         self._attr_name = f"Pixie {self._device_id} {self._channel} Uptime"
         self._attr_unique_id = f"pixie_{self._device_id}_{self._channel}_uptime"
 
-        self._uptime = None
-
-        self.qos = 0
-        self.retain = False
-        self.availability_topic = f"pixie_{self._device_id}/status"
-        self.attribute_topic = f"pixie_{self._device_id}/attributes"
+    def state_update_callback(self):
+        self.async_write_ha_state()
 
     async def async_added_to_hass(self):
         """Subscribe to MQTT events."""
-
-        @callback
-        async def availability_received(msg):
-            if msg.payload == "online":
-                self._attr_available = True
-            else:
-                self._attr_available = False
-
-            self.async_write_ha_state()
-
-        @callback
-        async def message_received(msg):
-            """Run when new MQTT message has been received."""
-
-            _LOGGER.debug("MQTT message received: %s", msg.payload)
-            try:
-                data = json.loads(msg.payload)
-            except vol.MultipleInvalid as error:
-                _LOGGER.debug("Skipping update because of malformatted data: %s", error)
-                return
-
-            if PIXIE_ATTR_UPTIME in data:
-                self._uptime = data[PIXIE_ATTR_UPTIME]
-                    
-
-            self.async_write_ha_state()
-
-        _LOGGER.info("Subscribe to the topic %s", self.availability_topic)
-        await mqtt.async_subscribe( self.hass, self.availability_topic, availability_received, self.qos )
-
-        _LOGGER.info("Subscribe to the topic %s", self.attribute_topic)
-        return await mqtt.async_subscribe( self.hass, self.attribute_topic, message_received, self.qos )
-
+        self._coordinator.uptime_sensor_callback(self.state_update_callback)
+        await self._coordinator.async_mqtt_handler()
 
     @property
     def native_value(self):
         """Return the state of the sensor."""
-        return self._uptime
+        return self._coordinator.uptime()
+
+    @property
+    def available(self):
+        """Return the availability of the sensor."""
+        return self._coordinator.available()
 
