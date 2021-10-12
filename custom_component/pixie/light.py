@@ -73,9 +73,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Add a pixie light from a config entry."""
-    #platform = entity_platform.async_get_current_platform()
 
-    light = PixieLight(hass, config_entry)
+    coordinator = hass.data[DOMAIN]["coordinator"]
+    light = PixieLight(coordinator)
     
     # Add devices
     async_add_entities([light], True)
@@ -83,41 +83,29 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
 class PixieLight(LightEntity):
     """Representation of a Pixie Light."""
+    _attr_icon = "mdi:led-strip-variant"
 
-    def __init__(self, hass, config_entry):
+    def __init__(self, coordinator):
         """Initialize a PixieLight."""
-        self.hass = hass
-        create_name = False
-        if CONF_NAME in config_entry.data:
-            if config_entry.data[CONF_NAME] == "":
-                create_name = True
-            else:
-                self._name = config_entry.data[CONF_NAME]
-        else:
-            create_name = True
+        self._coordinator = coordinator
+        self._device_id = coordinator.device_id()
+        self._channel = coordinator.channel()
+        self._attr_unique_id = f"pixie_{self._device_id}_{self._channel}"
+        self._attr_name = f"Pixie {self._device_id} {self._channel}"
 
-        if create_name:
-            self._name = "pixie_" + config_entry.data[CONF_DEVICE_ID] + "_" + str(config_entry.data[CONF_CHANNEL])
-        self._state = False
-        self._brightness = 255
-        self._color_mode = COLOR_MODE_RGB
-        self._effect = ""
-        self._white_value = 0
-        self._parameter1 = 0
-        self._parameter2 = 0
-        self._picture = ""
-        self._rgb = (255, 255, 255)
-        self._available = False
-        self._device_id = config_entry.data[CONF_DEVICE_ID]
-        self._channel = config_entry.data[CONF_CHANNEL]
-        self._unique_id = config_entry.entry_id
+        #create_name = False
+        #if CONF_NAME in config_entry.data:
+        #    if config_entry.data[CONF_NAME] == "":
+        #        create_name = True
+        #    else:
+        #        self._attr_name = config_entry.data[CONF_NAME]
+        #else:
+        #    create_name = True
+        #if create_name:
+        #    self._attr_name = f"Pixie {self._device_id} {self._channel}"
 
         self.qos = 0
         self.retain = False
-        self.availability_topic = "pixie_" + self._device_id + "/status"
-        self.command_topic = "pixie_" + self._device_id + "/channel" + str(self._channel) + "/set"
-        self.channel_topic = "pixie_" + self._device_id + "/channel" + str(self._channel)
-        self.all_channels_topic = "pixie_" + self._device_id + "/channel"
 
         platform = entity_platform.async_get_current_platform()
         platform.async_register_entity_service(
@@ -171,65 +159,13 @@ class PixieLight(LightEntity):
             "async_turn_off_transition",
         )
 
+    def state_update_callback(self):
+        self.async_write_ha_state()
+
     async def async_added_to_hass(self):
         """Subscribe to MQTT events."""
-
-        @callback
-        async def availability_received(msg):
-            if msg.payload == "online":
-                self._available = True
-            else:
-                self._available = False
-            self.async_write_ha_state()
-
-        @callback
-        async def message_received(msg):
-            """Run when new MQTT message has been received."""
-
-            _LOGGER.debug("MQTT message received: %s", msg.payload)
-            try:
-                data = json.loads(msg.payload)
-            except vol.MultipleInvalid as error:
-                _LOGGER.debug("Skipping update because of malformatted data: %s", error)
-                return
-
-            if data["state"].upper() == "ON":
-                self._state = True
-            elif data["state"].upper() == "OFF":
-                self._state = False
-
-            if "color" in data:
-                r = int(data["color"]["r"])  # pylint: disable=invalid-name
-                g = int(data["color"]["g"])  # pylint: disable=invalid-name
-                b = int(data["color"]["b"])  # pylint: disable=invalid-name
-                self._rgb = (r, g, b)
-
-            if "parameter1" in data:
-                self._parameter1 = int(data["parameter1"])
-
-            if "parameter2" in data:
-                self._parameter2 = int(data["parameter2"])
-
-            if "brightness" in data:
-                self._brightness = int(data["brightness"])
-
-            if "white_value" in data:
-                self._white_value = int(data["white_value"])
-        
-            if "picture" in data:
-                self._picture = data["picture"]
-
-            if "effect" in data:
-                self._effect = data["effect"]
-
-            self.async_write_ha_state()
-
-        _LOGGER.info("Subscribe to the topic %s", self.availability_topic)
-        await mqtt.async_subscribe( self.hass, self.availability_topic, availability_received, self.qos )
-
-        _LOGGER.info("Subscribe to the topic %s", self.channel_topic)
-        return await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
-
+        self._coordinator.light_state_callback(self.state_update_callback)
+        await self._coordinator.async_mqtt_handler()
 
     async def async_turn_on(self, **kwargs):
         """Instruct the light to turn on."""
@@ -267,24 +203,12 @@ class PixieLight(LightEntity):
             rgb = kwargs[ATTR_RGBW_COLOR]
             message["color"] = {"r": rgb[0], "g": rgb[1], "b": rgb[2], "w": rgb[3]}
 
-        mqtt.async_publish(
-            self.hass,
-            self.command_topic,
-            json.dumps(message),
-            self.qos,
-            self.retain,
-        )
+        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_turn_off(self, **kwargs):
         """Instruct the light to turn off."""
         message = {"state": "OFF"}
-        mqtt.async_publish(
-            self.hass,
-            self.command_topic,
-            json.dumps(message),
-            self.qos,
-            self.retain,
-        )
+        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_set_effect(self, **kwargs):
         """Set an effect of a Pixie light."""
@@ -317,14 +241,7 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
 
-        _LOGGER.debug("Send a json %s to the topic %s", json.dumps(message), self.command_topic)
-        mqtt.async_publish(
-            self.hass,
-            self.command_topic,
-            json.dumps(message),
-            self.qos,
-            self.retain,
-        )
+        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_set_picture(self, **kwargs):
         """Set a picture of a Pixie light."""
@@ -349,13 +266,7 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
 
-        mqtt.async_publish(
-            self.hass,
-            self.command_topic,
-            json.dumps(message),
-            self.qos,
-            self.retain,
-        )
+        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_turn_on_transition(self, **kwargs):
         """Turn a Pixie light on with a transition."""
@@ -381,13 +292,8 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
 
-        mqtt.async_publish(
-            self.hass,
-            self.command_topic,
-            json.dumps(message),
-            self.qos,
-            self.retain,
-        )
+        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+
 
     async def async_turn_off_transition(self, **kwargs):
         """Turn a Pixie light off with a transition."""
@@ -402,52 +308,37 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_PARAMETER2 in kwargs:
             message["parameter2"] = min( kwargs[PIXIE_ATTR_PARAMETER2], 255 )
 
-        mqtt.async_publish(
-            self.hass,
-            self.command_topic,
-            json.dumps(message),
-            self.qos,
-            self.retain,
-        )
+        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
-    @property
-    def unique_id(self):
-        """Return the entity unique ID."""
-        return self._unique_id
-
-    @property
-    def name(self):
-        """Return the display name of this light."""
-        return self._name
 
     @property
     def brightness(self):
         """Return brightness"""
-        return self._brightness
+        return self._coordinator.brightness()
 
     @property
     def is_on(self):
         """Return true if light is on."""
-        return self._state
+        return self._coordinator.state()
 
     @property
     def rgb_color(self):
         """Return the hs color value."""
-        return self._rgb
+        return self._coordinator.rgb()
 
     @property
     def parameter1(self):
         """Return parameter1 which is used to adjust effects/pictures/transitions"""
-        return self._parameter1
+        return self._coordinator.parameter1()
 
     @property
     def parameter2(self):
         """Return parameter2 which is used to adjust effects/pictures/transitions"""
-        return self._parameter2
+        return self._coordinator.parameter2()
 
     @property
     def white_value(self):
-        return self._white_value
+        return self._coordinator.white_value()
 
     @property
     def effect_list(self):
@@ -467,12 +358,12 @@ class PixieLight(LightEntity):
     @property
     def effect(self):
         """Return the current effect."""
-        return self._effect
+        return self._coordinator.effect()
 
     @property
     def picture(self):
         """Return the current effect."""
-        return self._picture
+        return self._coordinator.picture()
 
     @property
     def supported_features(self):
@@ -480,14 +371,14 @@ class PixieLight(LightEntity):
 
     @property
     def supported_color_modes(self):
-        return {self._color_mode};
+        return { self._coordinator.color_mode() };
 
     @property
     def color_mode(self):
         """Return the color mode of the light."""
-        return self._color_mode
+        return self._coordinator.color_mode()
 
     @property
     def available(self):
         """Return the availability of the light."""
-        return self._available
+        return self._coordinator.available()

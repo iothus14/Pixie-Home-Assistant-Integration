@@ -110,6 +110,9 @@ class PixieCoordinator:
             else:
                 self._available = False
             
+            if self._light_state_callback != None:
+                self._light_state_callback()
+
             if self._uptime_callback != None:
                 self._uptime_callback()
 
@@ -203,6 +206,9 @@ class PixieCoordinator:
 
         _LOGGER.info("Subscribe to the topic %s", self.channel_topic)
         return await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
+
+    def publish_command(self, message, qos, retain):
+        mqtt.async_publish( self.hass, self.command_topic, message, qos, retain )
 
     def device_id(self):
         return self._device_id
