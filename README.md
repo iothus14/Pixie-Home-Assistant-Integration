@@ -158,4 +158,26 @@ data:
   transition: 5
 ```
 
-Please check the documentation regarding all supported animations, pictures and transitions.
+Please check the documentation for all supported animations, pictures and transitions.
+
+### Sensors
+
+All sensor entities described below are disabled by default and can be enabled if needed. 
+The integration brings two extra sensors:
+ - board temperature (The defailt entity id: `sensor.pixie_abcdef_n_board_temperature`)
+ - uptime (The defailt entity id: `sensor.pixie_abcdef_n_uptime`)
+
+Here above `abcdef` is a unique id your the pixie device, `n` - the number of the channel
+
+
+### Selects
+
+All select entities described below are disabled by default and can be enabled if needed. 
+The integration brings two select entities:
+ - The list of the supported animation effects (The defailt entity id: `select.pixie_abcdef_n_effect`)
+ - The list of the supported pictures. (The defailt entity id: `select.pixie_abcdef_n_picture`)
+
+Here above `abcdef` is a unique id your the pixie device, `n` - the number of the channel
+
+
+
