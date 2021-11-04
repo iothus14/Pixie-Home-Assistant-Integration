@@ -187,14 +187,14 @@ class PixieLight(LightEntity):
             message["white_value"] = min( kwargs["white_value"], 255 )
 
         if "effect" in kwargs:
-            message["effect"] = kwargs["effect"]
+            message["effect"] = kwargs[PIXIE_ATTR_EFFECT].strip('"').strip("'")
         elif "picture" in kwargs:
-            message["picture"] = kwargs["picture"]
+            message["picture"] = kwargs["picture"].strip('"').strip("'")
         elif "transition" in kwargs:
             message["transition"] = kwargs["transition"]
             if "transition_name" in kwargs:
-                message["transition_name"] = kwargs["transition_name"]
-        
+                message["transition_name"] = kwargs["transition_name"].strip('"').strip("'")
+
         if ATTR_RGB_COLOR in kwargs:
             rgb = kwargs[ATTR_RGB_COLOR]
             message["color"] = {"r": rgb[0], "g": rgb[1], "b": rgb[2]}
@@ -218,7 +218,7 @@ class PixieLight(LightEntity):
             _LOGGER.warning("An effect must be specified to run the service pixie.set_effect")
             return
 
-        message["effect"] = kwargs[PIXIE_ATTR_EFFECT]
+        message["effect"] = kwargs[PIXIE_ATTR_EFFECT].strip('"').strip("'")
 
         if message["effect"] not in PIXIE_EFFECT_LIST:
             _LOGGER.warning("The specified effect %s is not supported. The effect is ignored.", message["effect"])
@@ -247,7 +247,7 @@ class PixieLight(LightEntity):
         """Set a picture of a Pixie light."""
         message = {"state": "ON"}
 
-        message["picture"] = kwargs[PIXIE_ATTR_PICTURE]
+        message["picture"] = kwargs[PIXIE_ATTR_PICTURE].strip('"').strip("'")
 
         if PIXIE_ATTR_PARAMETER1 in kwargs:
             message["parameter1"] = min( kwargs[PIXIE_ATTR_PARAMETER1], 255 )
@@ -272,7 +272,8 @@ class PixieLight(LightEntity):
         """Turn a Pixie light on with a transition."""
 
         message = {"state": "ON"}
-        message["transition_name"] = kwargs[PIXIE_ATTR_TRANSITION_NAME]
+        message["transition_name"] = kwargs[PIXIE_ATTR_TRANSITION_NAME].strip('"').strip("'")
+
         message["transition"] = kwargs[PIXIE_ATTR_TRANSITION]
 
         if PIXIE_ATTR_PARAMETER1 in kwargs:
@@ -299,7 +300,8 @@ class PixieLight(LightEntity):
         """Turn a Pixie light off with a transition."""
 
         message = {"state": "OFF"}
-        message["transition_name"] = kwargs[PIXIE_ATTR_TRANSITION_NAME]
+        message["transition_name"] = kwargs[PIXIE_ATTR_TRANSITION_NAME].strip('"').strip("'")
+
         message["transition"] = kwargs[PIXIE_ATTR_TRANSITION]
 
         if PIXIE_ATTR_PARAMETER1 in kwargs:
