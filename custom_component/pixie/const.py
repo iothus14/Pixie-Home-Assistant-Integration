@@ -16,6 +16,10 @@ PIXIE_ATTR_PARAMETER2 = "parameter2"
 PIXIE_ATTR_BRIGHTNESS = "brightness"
 PIXIE_ATTR_BOARD_TEMPERATURE = "board_temperature"
 PIXIE_ATTR_UPTIME = "uptime"
+PIXIE_ATTR_FIRMWARE_VERSION = "firmware_version"
+PIXIE_ATTR_MAC = "mac"
+PIXIE_ATTR_IP_ADDR = "ip_addr"
+PIXIE_ATTR_URL = "url"
 
 # Services
 SERVICE_SET_EFFECT = "set_effect"

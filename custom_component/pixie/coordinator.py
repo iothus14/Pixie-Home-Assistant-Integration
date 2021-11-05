@@ -41,6 +41,10 @@ from .const import (
     PIXIE_ATTR_BRIGHTNESS,
     PIXIE_ATTR_BOARD_TEMPERATURE,
     PIXIE_ATTR_UPTIME,
+    PIXIE_ATTR_FIRMWARE_VERSION,
+    PIXIE_ATTR_MAC,
+    PIXIE_ATTR_IP_ADDR,
+    PIXIE_ATTR_URL,
     SERVICE_SET_PICTURE,
     SERVICE_SET_EFFECT,
     SERVICE_TURN_ON_TRANSITION,
@@ -70,12 +74,18 @@ class PixieCoordinator:
         self._uptime = None
         self._device_id = config_entry.data[CONF_DEVICE_ID]
         self._channel = config_entry.data[CONF_CHANNEL]
+        self._firmware_version = None
+        self._ip_addr = None
+        self._mac = None
+        self._url = None
 
         self.qos = 0
         self.retain = False
         self.availability_topic = f"pixie_{self._device_id}/status"
         self.channel_topic = f"pixie_{self._device_id}/channel{self._channel}"
+        self.request_topic = f"pixie_{self._device_id}/channel{self._channel}/get"
         self.command_topic = f"pixie_{self._device_id}/channel{self._channel}/set"
+        self.attribute_request_topic = f"pixie_{self._device_id}/attributes/get"
         self.attribute_topic = f"pixie_{self._device_id}/attributes"
         self.all_channels_topic = f"pixie_{self._device_id}/channel"
 
@@ -85,12 +95,13 @@ class PixieCoordinator:
         self._board_temp_callback = None
         self._picture_callback = None
         self._effect_callback = None
+        self._attr_callback = None
 
     def uptime_sensor_callback(self, callback=None):
         self._uptime_callback = callback
 
     def board_temp_sensor_callback(self, callback=None):
-        self._uptime_callback = callback
+        self._board_temp_callback = callback
 
     def picture_select_callback(self, callback=None):
         self._picture_callback = callback
@@ -100,6 +111,9 @@ class PixieCoordinator:
 
     def light_state_callback(self, callback=None):
         self._light_state_callback = callback
+
+    def attr_callback(self, callback=None):
+        self._attr_callback = callback
 
     async def async_mqtt_handler(self):
         """Subscribe to MQTT events."""
@@ -143,6 +157,26 @@ class PixieCoordinator:
                 self._uptime = data[PIXIE_ATTR_UPTIME]
                 if self._uptime_callback != None:
                     self._uptime_callback()
+
+            if PIXIE_ATTR_FIRMWARE_VERSION in data:
+                self._firmware_version = data[PIXIE_ATTR_FIRMWARE_VERSION]
+                if self._firmware_version != None:
+                    self._attr_callback()
+
+            if PIXIE_ATTR_IP_ADDR in data:
+                self._ip_addr = data[PIXIE_ATTR_IP_ADDR]
+                if self._ip_addr != None:
+                    self._attr_callback()
+
+            if PIXIE_ATTR_MAC in data:
+                self._mac = data[PIXIE_ATTR_MAC]
+                if self._mac != None:
+                    self._attr_callback()
+
+            if PIXIE_ATTR_URL in data:
+                self._url = data[PIXIE_ATTR_URL]
+                if self._url != None:
+                    self._attr_callback()
 
 
         @callback
@@ -205,7 +239,13 @@ class PixieCoordinator:
         await mqtt.async_subscribe( self.hass, self.attribute_topic, attribute_message_received, self.qos )
 
         _LOGGER.info("Subscribe to the topic %s", self.channel_topic)
-        return await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
+        await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
+        
+        _LOGGER.info("Request the current state over the topic %s", self.request_topic)
+        mqtt.async_publish( self.hass, self.request_topic, "1", self.qos, False )
+
+        _LOGGER.info("Request the attributes over the topic %s", self.attribute_request_topic)
+        mqtt.async_publish( self.hass, self.attribute_request_topic, "1", self.qos, False )
 
     def publish_command(self, message, qos, retain):
         mqtt.async_publish( self.hass, self.command_topic, message, qos, retain )
@@ -251,4 +291,16 @@ class PixieCoordinator:
 
     def rgb(self):
         return self._rgb
+
+    def firmware_version(self):
+        return self._firmware_version
+
+    def ip_addr(self):
+        return self._ip_addr
+
+    def mac(self):
+        return self._mac
+
+    def url(self):
+        return self._url
 

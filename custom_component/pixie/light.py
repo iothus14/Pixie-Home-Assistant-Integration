@@ -10,6 +10,13 @@ from homeassistant.core import HomeAssistant, HomeAssistantError, callback
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.config_entries import SOURCE_IMPORT
 from homeassistant.components import mqtt
+from homeassistant.const import (
+    ATTR_IDENTIFIERS,
+    ATTR_MANUFACTURER,
+    ATTR_MODEL,
+    ATTR_NAME,
+    ATTR_SW_VERSION,
+)
 from homeassistant.components.light import (
     ATTR_RGB_COLOR,
     ATTR_RGBW_COLOR,
@@ -165,6 +172,7 @@ class PixieLight(LightEntity):
     async def async_added_to_hass(self):
         """Subscribe to MQTT events."""
         self._coordinator.light_state_callback(self.state_update_callback)
+        self._coordinator.attr_callback(self.state_update_callback)
         await self._coordinator.async_mqtt_handler()
 
     async def async_turn_on(self, **kwargs):
@@ -384,3 +392,32 @@ class PixieLight(LightEntity):
     def available(self):
         """Return the availability of the light."""
         return self._coordinator.available()
+
+    @property
+    def extra_state_attributes(self):
+        """Return the device specific state attributes."""
+        attributes = {
+            "url": self._coordinator.url(),
+            "ip_addr": self._coordinator.ip_addr(),
+        }
+
+        if self._coordinator.state():
+            attributes["parameter1"] = self._coordinator.parameter1()
+            attributes["parameter2"] = self._coordinator.parameter2()
+
+        if self._coordinator.state() and self._coordinator.picture() != "" and self._coordinator.picture() != None:
+            attributes["picture"] = self._coordinator.picture()
+
+        return attributes
+
+    @property
+    def device_info(self):
+        return {
+            ATTR_IDENTIFIERS: {(DOMAIN, self._device_id)},
+            ATTR_NAME: "Pixie",
+            ATTR_MANUFACTURER: "iothus14",
+            ATTR_MODEL: "Pixie",
+            ATTR_SW_VERSION: self._coordinator.firmware_version(),
+            "configuration_url": f"http://{self._coordinator.ip_addr()}"
+        }
+
