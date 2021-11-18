@@ -109,6 +109,43 @@ set_effect:
       selector:
         object:
 
+set_random_effect:
+  name: Set random animation effect
+  description: Run a random animation effect on a Pixie device.
+  target:
+    entity:
+      integration: pixie
+      domain: light
+  fields:
+    parameter1:
+      name: Parameter 1
+      description: The parameter1 usually defines the speed of the effect. If the value is not specified a random number is generated between 0 and 255.
+      selector:
+        number:
+          min: 0
+          max: 255
+    parameter2:
+      name: Parameter 2
+      description: The parameter1 usually defines the intensity of the effect. If the value is not specified a random number is generated between 0 and 255.
+      selector:
+        number:
+          min: 0
+          max: 255
+    brightness:
+      name: Brightness
+      description: Brightness of the effect. Number between 0 and 255.
+      selector:
+        number:
+          min: 0
+          max: 255
+    rgb_color:
+      name: RGB color
+      description: A list containing three integers between 0 and 255 representing the RGB (red, green, blue) color for the effect. If the color is not specified a random color is generated instead.
+      advanced: true
+      example: "[255, 100, 50]"
+      selector:
+        object:
+
 set_picture:
   name: Set static effect
   description: Run a static effect on a Pixie device.

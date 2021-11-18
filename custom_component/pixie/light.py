@@ -3,6 +3,7 @@ import logging
 
 import json
 import voluptuous as vol
+import random
 
 from homeassistant.helpers import config_validation as cv, entity_platform, service
 from homeassistant.const import CONF_ICON, CONF_NAME
@@ -49,6 +50,7 @@ from .const import (
     PIXIE_ATTR_BRIGHTNESS,
     SERVICE_SET_PICTURE,
     SERVICE_SET_EFFECT,
+    SERVICE_SET_RANDOM_EFFECT,
     SERVICE_TURN_ON_TRANSITION,
     SERVICE_TURN_OFF_TRANSITION,
     PIXIE_EFFECT_LIST,
@@ -83,6 +85,74 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
 
     coordinator = hass.data[DOMAIN]["coordinator"]
     light = PixieLight(coordinator)
+
+    platform = entity_platform.async_get_current_platform()
+    platform.async_register_entity_service(
+        SERVICE_SET_EFFECT,
+        {
+            vol.Required(PIXIE_ATTR_EFFECT): cv.string,
+            vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_BRIGHTNESS): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Exclusive(ATTR_RGB_COLOR, ATTR_RGB_COLOR): vol.All(
+                vol.ExactSequence((cv.byte,) * 3), vol.Coerce(tuple)
+            ),
+        },
+        "async_set_effect",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_RANDOM_EFFECT,
+        {
+            vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_BRIGHTNESS): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Exclusive(ATTR_RGB_COLOR, ATTR_RGB_COLOR): vol.All(
+                vol.ExactSequence((cv.byte,) * 3), vol.Coerce(tuple)
+            ),
+        },
+        "async_set_random_effect",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_SET_PICTURE,
+        {
+            vol.Required(PIXIE_ATTR_PICTURE): cv.string,
+            vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_BRIGHTNESS): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Exclusive(ATTR_RGB_COLOR, ATTR_RGB_COLOR): vol.All(
+                vol.ExactSequence((cv.byte,) * 3), vol.Coerce(tuple)
+            ),
+        },
+        "async_set_picture",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_TURN_ON_TRANSITION,
+        {
+            vol.Required(PIXIE_ATTR_TRANSITION_NAME): cv.string,
+            vol.Required(PIXIE_ATTR_TRANSITION): vol.All( vol.Coerce(int), vol.Range(min=0, max=4096) ),
+            vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_BRIGHTNESS): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Required(ATTR_RGB_COLOR, ATTR_RGB_COLOR): vol.All(
+                vol.ExactSequence((cv.byte,) * 3), vol.Coerce(tuple)
+            ),
+        },
+        "async_turn_on_transition",
+    )
+
+    platform.async_register_entity_service(
+        SERVICE_TURN_OFF_TRANSITION,
+        {
+            vol.Required(PIXIE_ATTR_TRANSITION_NAME): cv.string,
+            vol.Required(PIXIE_ATTR_TRANSITION): vol.All( vol.Coerce(int), vol.Range(min=0, max=4096) ),
+            vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+            vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
+        },
+        "async_turn_off_transition",
+    )
     
     # Add devices
     async_add_entities([light], True)
@@ -114,57 +184,6 @@ class PixieLight(LightEntity):
         self.qos = 0
         self.retain = False
 
-        platform = entity_platform.async_get_current_platform()
-        platform.async_register_entity_service(
-            SERVICE_SET_EFFECT,
-            {
-                vol.Required(PIXIE_ATTR_EFFECT): cv.string,
-                vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Optional(PIXIE_ATTR_BRIGHTNESS): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Exclusive(ATTR_RGB_COLOR, ATTR_RGB_COLOR): vol.All(
-                    vol.ExactSequence((cv.byte,) * 3), vol.Coerce(tuple)
-                ),
-            },
-            "async_set_effect",
-        )
-        platform.async_register_entity_service(
-            SERVICE_SET_PICTURE,
-            {
-                vol.Required(PIXIE_ATTR_PICTURE): cv.string,
-                vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Optional(PIXIE_ATTR_BRIGHTNESS): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Exclusive(ATTR_RGB_COLOR, ATTR_RGB_COLOR): vol.All(
-                    vol.ExactSequence((cv.byte,) * 3), vol.Coerce(tuple)
-                ),
-            },
-            "async_set_picture",
-        )
-        platform.async_register_entity_service(
-            SERVICE_TURN_ON_TRANSITION,
-            {
-                vol.Required(PIXIE_ATTR_TRANSITION_NAME): cv.string,
-                vol.Required(PIXIE_ATTR_TRANSITION): vol.All( vol.Coerce(int), vol.Range(min=0, max=4096) ),
-                vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Optional(PIXIE_ATTR_BRIGHTNESS): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Required(ATTR_RGB_COLOR, ATTR_RGB_COLOR): vol.All(
-                    vol.ExactSequence((cv.byte,) * 3), vol.Coerce(tuple)
-                ),
-            },
-            "async_turn_on_transition",
-        )
-        platform.async_register_entity_service(
-            SERVICE_TURN_OFF_TRANSITION,
-            {
-                vol.Required(PIXIE_ATTR_TRANSITION_NAME): cv.string,
-                vol.Required(PIXIE_ATTR_TRANSITION): vol.All( vol.Coerce(int), vol.Range(min=0, max=4096) ),
-                vol.Optional(PIXIE_ATTR_PARAMETER1): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-                vol.Optional(PIXIE_ATTR_PARAMETER2): vol.All( vol.Coerce(int), vol.Range(min=0, max=255) ),
-            },
-            "async_turn_off_transition",
-        )
 
     def state_update_callback(self):
         self.async_write_ha_state()
@@ -245,6 +264,40 @@ class PixieLight(LightEntity):
         if ATTR_RGB_COLOR in kwargs:
             rgb = kwargs[ATTR_RGB_COLOR]
             message["color"] = {"r": rgb[0], "g": rgb[1], "b": rgb[2]}
+
+        if PIXIE_ATTR_BRIGHTNESS in kwargs:
+            message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
+
+        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+
+    async def async_set_random_effect(self, **kwargs):
+        """Set a random effect of a Pixie light."""
+        message = {"state": "ON"}
+    
+        i = min( (len(PIXIE_EFFECT_LIST) - 1), round( random.random() * len(PIXIE_EFFECT_LIST) ) )
+        message["effect"] = PIXIE_EFFECT_LIST[ i ]
+
+        if PIXIE_ATTR_PARAMETER1 in kwargs:
+            message["parameter1"] = min( kwargs[PIXIE_ATTR_PARAMETER1], 255 )
+        else:
+            message["parameter1"] = round( random.random() * 255 )
+
+        if PIXIE_ATTR_PARAMETER2 in kwargs:
+            message["parameter2"] = min( kwargs[PIXIE_ATTR_PARAMETER2], 255 )
+        else:
+            message["parameter2"] = round( random.random() * 255 )
+
+        if ATTR_RGBW_COLOR in kwargs:
+            rgb = kwargs[ATTR_RGBW_COLOR]
+            message["color"] = {"r": rgb[0], "g": rgb[1], "b": rgb[2], "w": rgb[3]}
+        else:
+            message["color"] = { "r":round( random.random() * 255 ), "g":round( random.random() * 255 ), "b":round( random.random() * 255 ), "w":round( random.random() * 255 ) }
+
+        if ATTR_RGB_COLOR in kwargs:
+            rgb = kwargs[ATTR_RGB_COLOR]
+            message["color"] = {"r": rgb[0], "g": rgb[1], "b": rgb[2]}
+        else:
+            message["color"] = { "r":round( random.random() * 255 ), "g":round( random.random() * 255 ), "b":round( random.random() * 255 ) }
 
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )

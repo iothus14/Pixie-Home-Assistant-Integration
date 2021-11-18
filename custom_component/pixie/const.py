@@ -23,6 +23,7 @@ PIXIE_ATTR_URL = "url"
 
 # Services
 SERVICE_SET_EFFECT = "set_effect"
+SERVICE_SET_RANDOM_EFFECT = "set_random_effect"
 SERVICE_SET_PICTURE = "set_picture"
 SERVICE_TURN_ON_TRANSITION = "turn_on_transition"
 SERVICE_TURN_OFF_TRANSITION = "turn_off_transition"
