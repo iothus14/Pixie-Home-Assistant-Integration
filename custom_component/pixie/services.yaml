@@ -82,21 +82,21 @@ set_effect:
             - "Scanner"
     parameter1:
       name: Parameter 1
-      description: The parameter1 usually defines the speed of the effect. Number between 0 and 255.
+      description: The parameter1 defines a speed of the effect. It's a number between 0 and 255.
       selector:
         number:
           min: 0
           max: 255
     parameter2:
       name: Parameter 2
-      description: The parameter2 usually defines the intensity of the effect. Number between 0 and 255.
+      description: The parameter2 defines an intensity of the effect. It's a number between 0 and 255.
       selector:
         number:
           min: 0
           max: 255
     brightness:
       name: Brightness
-      description: Brightness of the effect. Number between 0 and 255.
+      description: Brightness of the effect. The valid value is between 0 and 255.
       selector:
         number:
           min: 0
@@ -119,14 +119,14 @@ set_random_effect:
   fields:
     parameter1:
       name: Parameter 1
-      description: The parameter1 usually defines the speed of the effect. If the value is not specified a random number is generated between 0 and 255.
+      description: The parameter1 defines a speed of the effect. If the value is not specified a random number is generated between 0 and 255.
       selector:
         number:
           min: 0
           max: 255
     parameter2:
       name: Parameter 2
-      description: The parameter1 usually defines the intensity of the effect. If the value is not specified a random number is generated between 0 and 255.
+      description: The parameter2 defines an intensity of the effect. If the value is not specified a random number is generated between 0 and 255.
       selector:
         number:
           min: 0
@@ -172,14 +172,14 @@ set_picture:
             - "Noise"
     parameter1:
       name: Parameter 1
-      description: The parameter1 of the picture effect. Number between 0 and 255.
+      description: The parameter1 of the picture effect. It's a number between 0 and 255.
       selector:
         number:
           min: 0
           max: 255
     parameter2:
       name: Parameter 2
-      description: The parameter2 the picture effect. Number between 0 and 255.
+      description: The parameter2 the picture effect. It's a number between 0 and 255.
       selector:
         number:
           min: 0
@@ -201,7 +201,7 @@ set_picture:
 
 turn_on_transition:
   name: Turn on with transition
-  description: Turn on a pixie device with a transition effect
+  description: Turn on a pixie device with a transition effect.
   target:
     entity:
       integration: pixie
@@ -265,7 +265,7 @@ turn_on_transition:
 
 turn_off_transition:
   name: Turn off with transition
-  description: Turn off a pixie device with a transition effect
+  description: Turn off a pixie device with a transition effect.
   target:
     entity:
       integration: pixie
