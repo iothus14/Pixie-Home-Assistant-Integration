@@ -2,6 +2,7 @@
 
 This is a custom component to support a Pixie LED controller in Home Assistant.
 
+https://www.tindie.com/products/iothus14/pixie-led-controller/
 
 ### Installation
 
