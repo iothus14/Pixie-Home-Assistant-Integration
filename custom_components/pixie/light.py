@@ -83,7 +83,8 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Add a pixie light from a config entry."""
 
-    coordinator = hass.data[DOMAIN]["coordinator"]
+    c_key = f"coordinator_{config_entry.entry_id}"
+    coordinator = hass.data[DOMAIN][c_key]
     light = PixieLight(coordinator)
 
     platform = entity_platform.async_get_current_platform()
@@ -242,13 +243,13 @@ class PixieLight(LightEntity):
         message = {"state": "ON"}
     
         if PIXIE_ATTR_EFFECT not in kwargs:
-            _LOGGER.warning("An effect must be specified to run the service pixie.set_effect")
+            _LOGGER.warning("[%s] An effect must be specified to run the service pixie.set_effect", self._device_id )
             return
 
         message["effect"] = kwargs[PIXIE_ATTR_EFFECT].strip('"').strip("'")
 
         if message["effect"] not in PIXIE_EFFECT_LIST:
-            _LOGGER.warning("The specified effect %s is not supported. The effect is ignored.", message["effect"])
+            _LOGGER.warning("[%s] The specified effect %s is not supported. The effect is ignored.", self._device_id,  message["effect"])
             return
 
         if PIXIE_ATTR_PARAMETER1 in kwargs:

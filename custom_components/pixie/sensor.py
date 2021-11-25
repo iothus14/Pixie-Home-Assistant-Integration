@@ -29,7 +29,8 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry( hass: HomeAssistant, config_entry: ConfigEntry, async_add_entities: AddEntitiesCallback ):
     """Set up Pixie sensors"""
 
-    coordinator = hass.data[DOMAIN]["coordinator"]
+    c_key = f"coordinator_{config_entry.entry_id}"
+    coordinator = hass.data[DOMAIN][c_key]
     board_temperature_sensor = PixieBoardTemperatureSensor(coordinator)
     uptime_sensor = PixieUptimeSensor(coordinator)
 

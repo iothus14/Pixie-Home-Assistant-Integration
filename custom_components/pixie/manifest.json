@@ -1,8 +1,8 @@
 {
   "domain": "pixie",
   "name": "Pixie",
-  "documentation": "https://github.com/iothus14/Pixie-Home-Assistant-Integration",
-  "issue_tracker": "https://github.com/iothus14/Pixie-Home-Assistant-Integration/issues",
+  "documentation": "https://github.com/iothus14/Pixie",
+  "issue_tracker":"https://github.com/iothus14/Pixie/issues",
   "dependencies": ["mqtt"],
   "codeowners": ["iothus14"],
   "requirements": [],

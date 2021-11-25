@@ -26,7 +26,8 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass, config_entry, async_add_entities):
     #coordinator = PixieSelectCoordinator(hass, config_entry)
 
-    coordinator = hass.data[DOMAIN]["coordinator"]
+    c_key = f"coordinator_{config_entry.entry_id}"
+    coordinator = hass.data[DOMAIN][c_key]
     select_picture = PixiePictureSelect(coordinator)
     select_effect = PixieEffectSelect(coordinator)
 

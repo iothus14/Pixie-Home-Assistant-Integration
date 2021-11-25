@@ -41,11 +41,14 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a pixie light from a config entry."""
     hass.config_entries.async_setup_platforms(entry, PLATFORMS)
 
+    _LOGGER.info("Set up entry: entry_id: %s;", entry.entry_id)
+
     hass.data.setdefault(DOMAIN, {})
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
     coordinator = PixieCoordinator(hass, entry)
-    hass.data[DOMAIN]["coordinator"] = coordinator
+    c_key = f"coordinator_{entry.entry_id}"
+    hass.data[DOMAIN][c_key] = coordinator
 
     return True
 
@@ -55,6 +58,8 @@ async def async_unload_entry(hass: HomeAssistant, entry: ConfigEntry):
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
         hass.data[DOMAIN].pop(entry.entry_id)
+        c_key = f"coordinator_{entry.entry_id}"
+        hass.data[DOMAIN].pop(c_key)
 
         if not hass.data[DOMAIN]:
             hass.services.async_remove(domain=DOMAIN, service=SERVICE_SET_EFFECT)

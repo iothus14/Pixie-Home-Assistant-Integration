@@ -97,6 +97,8 @@ class PixieCoordinator:
         self._effect_callback = None
         self._attr_callback = None
 
+        _LOGGER.info("Set up a coordinator for the device %s; channel %s;", self._device_id, self._channel)
+
     def uptime_sensor_callback(self, callback=None):
         self._uptime_callback = callback
 
@@ -119,6 +121,7 @@ class PixieCoordinator:
         """Subscribe to MQTT events."""
         @callback
         async def availability_received(msg):
+            _LOGGER.debug("[%s] MQTT availability message received: %s", self._device_id, msg.payload)
             if msg.payload == "online":
                 self._available = True
             else:
@@ -141,11 +144,11 @@ class PixieCoordinator:
 
         @callback
         async def attribute_message_received(msg):
-            _LOGGER.debug("MQTT attribute message received: %s", msg.payload)
+            _LOGGER.debug("[%s] MQTT attribute message received: %s", self._device_id, msg.payload)
             try:
                 data = json.loads(msg.payload)
             except vol.MultipleInvalid as error:
-                _LOGGER.debug("Skipping update because of malformatted data: %s", error)
+                _LOGGER.warning("[%s] Skipping update because of malformatted data: %s", self._device_id, error)
                 return
 
             if PIXIE_ATTR_BOARD_TEMPERATURE in data:
@@ -183,11 +186,11 @@ class PixieCoordinator:
         async def message_received(msg):
             """Run when new MQTT message has been received."""
 
-            _LOGGER.debug("MQTT message received: %s", msg.payload)
+            _LOGGER.debug("[%s] MQTT message received: %s", self._device_id, msg.payload)
             try:
                 data = json.loads(msg.payload)
             except vol.MultipleInvalid as error:
-                _LOGGER.debug("Skipping update because of malformatted data: %s", error)
+                _LOGGER.warning("[%s] Skipping update because of malformatted data: %s", self._device_id, error)
                 return
 
             if PIXIE_ATTR_PICTURE in data:
@@ -248,6 +251,7 @@ class PixieCoordinator:
         mqtt.async_publish( self.hass, self.attribute_request_topic, "1", self.qos, False )
 
     def publish_command(self, message, qos, retain):
+        _LOGGER.info("Publish a command %s to the topic %s", message, self.command_topic)
         mqtt.async_publish( self.hass, self.command_topic, message, qos, retain )
 
     def device_id(self):
