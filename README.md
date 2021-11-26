@@ -85,6 +85,19 @@ data:
 ```
 
 
+### Service pixie.set_random_effect
+
+This service runs a random animation effect on the LED strip.
+
+|Service data attribute    | Optional  | Description                        |
+|--------------------------|-----------|------------------------------------|
+| **entity_id**            | No        | Entity Id of a pixie device.        |
+| **parameter1**           | Yes       | The parameter1 defines a speed of the effect. If the value is not specified a random number is generated between 0 and 255. |
+| **parameter2**           | Yes       | The parameter2 defines an intensity of the effect. If the value is not specified a random number is generated between 0 and 255. |
+| **color**                | Yes       | A list containing three integers between 0 and 255 representing the RGB (red, green, blue) color for the effect. If the color is not specified a random color is generated instead. |
+| **brightness**           | Yes       | The brightness value to set (1..255). |
+
+
 ### Service pixie.set_picture
 
 This service runs a static effect on the LED strip.
