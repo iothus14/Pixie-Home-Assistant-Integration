@@ -2,5 +2,5 @@
     "name": "Pixie",
     "render_readme": true,
     "domains": ["light", "sensor"],
-    "homeassistant": "2021.4.0"
+    "homeassistant": "2021.12.0"
 }

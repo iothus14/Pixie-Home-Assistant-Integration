@@ -6,7 +6,7 @@ https://www.tindie.com/products/iothus14/pixie-led-controller/
 
 ### Installation
 
-Requires Home Assistant 2021.4.0 or newer.
+Requires Home Assistant 2021.12.0 or newer.
 
 #### Installation through HACS
 Find the Pixie integration in HACS and install it. If you haven't installed HACS, please, go get it at https://hacs.xyz/ and go through the installation and configuration. Restart Home Assistant and install the new integration through Configuration -> Integrations in HA (see the details below).
