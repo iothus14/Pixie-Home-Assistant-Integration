@@ -231,12 +231,12 @@ class PixieLight(LightEntity):
             rgb = kwargs[ATTR_RGBW_COLOR]
             message["color"] = {"r": rgb[0], "g": rgb[1], "b": rgb[2], "w": rgb[3]}
 
-        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+        await self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_turn_off(self, **kwargs):
         """Instruct the light to turn off."""
         message = {"state": "OFF"}
-        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+        await self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_set_effect(self, **kwargs):
         """Set an effect of a Pixie light."""
@@ -269,7 +269,7 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
 
-        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+        await self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_set_random_effect(self, **kwargs):
         """Set a random effect of a Pixie light."""
@@ -303,7 +303,7 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
 
-        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+        await self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_set_picture(self, **kwargs):
         """Set a picture of a Pixie light."""
@@ -328,7 +328,7 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
 
-        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+        await self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
     async def async_turn_on_transition(self, **kwargs):
         """Turn a Pixie light on with a transition."""
@@ -355,7 +355,7 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_BRIGHTNESS in kwargs:
             message["brightness"] = min( max(1, kwargs[PIXIE_ATTR_BRIGHTNESS]), 255 )
 
-        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+        await self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
 
     async def async_turn_off_transition(self, **kwargs):
@@ -372,7 +372,7 @@ class PixieLight(LightEntity):
         if PIXIE_ATTR_PARAMETER2 in kwargs:
             message["parameter2"] = min( kwargs[PIXIE_ATTR_PARAMETER2], 255 )
 
-        self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
+        await self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
 
     @property

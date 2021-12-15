@@ -245,14 +245,14 @@ class PixieCoordinator:
         await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
         
         _LOGGER.info("Request the current state over the topic %s", self.request_topic)
-        mqtt.async_publish( self.hass, self.request_topic, "1", self.qos, False )
+        await mqtt.async_publish( self.hass, self.request_topic, "1", self.qos, False )
 
         _LOGGER.info("Request the attributes over the topic %s", self.attribute_request_topic)
-        mqtt.async_publish( self.hass, self.attribute_request_topic, "1", self.qos, False )
+        await mqtt.async_publish( self.hass, self.attribute_request_topic, "1", self.qos, False )
 
-    def publish_command(self, message, qos, retain):
+    async def publish_command(self, message, qos, retain):
         _LOGGER.info("Publish a command %s to the topic %s", message, self.command_topic)
-        mqtt.async_publish( self.hass, self.command_topic, message, qos, retain )
+        await mqtt.async_publish( self.hass, self.command_topic, message, qos, retain )
 
     def device_id(self):
         return self._device_id
