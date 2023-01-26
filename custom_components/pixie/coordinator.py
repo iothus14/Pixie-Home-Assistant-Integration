@@ -126,7 +126,7 @@ class PixieCoordinator:
                 self._available = True
             else:
                 self._available = False
-            
+
             if self._light_state_callback != None:
                 self._light_state_callback()
 
@@ -243,7 +243,7 @@ class PixieCoordinator:
 
         _LOGGER.info("Subscribe to the topic %s", self.channel_topic)
         await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
-        
+
         _LOGGER.info("Request the current state over the topic %s", self.request_topic)
         await mqtt.async_publish( self.hass, self.request_topic, "1", self.qos, False )
 

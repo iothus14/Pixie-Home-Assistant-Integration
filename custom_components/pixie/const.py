@@ -5,7 +5,7 @@ DOMAIN = "pixie"
 CONF_DEVICE_ID = "device_id"
 CONF_CHANNEL = "channel"
 CONF_NAME = "name"
-        
+
 PIXIE_ATTR_STATE = "state"
 PIXIE_ATTR_PICTURE = "picture"
 PIXIE_ATTR_TRANSITION_NAME = "transition_name"
