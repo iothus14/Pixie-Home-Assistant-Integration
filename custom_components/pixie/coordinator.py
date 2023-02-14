@@ -14,12 +14,10 @@ from homeassistant.components.light import (
     ATTR_RGBW_COLOR,
     ATTR_BRIGHTNESS,
     ATTR_EFFECT,
-    ATTR_WHITE_VALUE,
     PLATFORM_SCHEMA,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
     SUPPORT_EFFECT,
-    SUPPORT_WHITE_VALUE,
     SUPPORT_TRANSITION,
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
@@ -78,6 +76,12 @@ class PixieCoordinator:
         self._ip_addr = None
         self._mac = None
         self._url = None
+        
+        self._available_version = None
+        self._available_version_int = 0
+        self._firmware_version_int = 0
+        self._ota_state = None
+        self._ota_in_progress = False
 
         self.qos = 0
         self.retain = False
@@ -88,6 +92,9 @@ class PixieCoordinator:
         self.attribute_request_topic = f"pixie_{self._device_id}/attributes/get"
         self.attribute_topic = f"pixie_{self._device_id}/attributes"
         self.all_channels_topic = f"pixie_{self._device_id}/channel"
+        self.ota_check_topic = f"pixie_{self._device_id}/ota/check"
+        self.ota_perform_topic = f"pixie_{self._device_id}/ota/perform"
+        self.ota_reply_topic = f"pixie_{self._device_id}/ota"
 
         self._light_state_callback = None
         self._availability_callback = None
@@ -96,6 +103,7 @@ class PixieCoordinator:
         self._picture_callback = None
         self._effect_callback = None
         self._attr_callback = None
+        self._ota_callback = None
 
         _LOGGER.info("Set up a coordinator for the device %s; channel %s;", self._device_id, self._channel)
 
@@ -116,6 +124,9 @@ class PixieCoordinator:
 
     def attr_callback(self, callback=None):
         self._attr_callback = callback
+
+    def ota_callback(self, callback=None):
+        self._ota_callback = callback
 
     async def async_mqtt_handler(self):
         """Subscribe to MQTT events."""
@@ -234,6 +245,47 @@ class PixieCoordinator:
 
             if self._light_state_callback != None:
                 self._light_state_callback()
+        
+        @callback
+        async def ota_message_received(msg):
+            _LOGGER.debug("[%s] MQTT OTA message received: %s", self._device_id, msg.payload)
+            try:
+                data = json.loads(msg.payload)
+            except vol.MultipleInvalid as error:
+                _LOGGER.warning("[%s] Skipping update because of malformatted data: %s", self._device_id, error)
+                return
+            
+            if ("ota_state" in data) and ("ota_type" in data) and ("result" in data):
+                if data["ota_state"] == "start" and data["ota_type"] == "update" and data["result"] == 1:
+                    self._ota_in_progress = True
+                    _LOGGER.info("[%s] OTA update has started", self._device_id)
+                elif data["ota_state"] == "end" and data["ota_type"] == "update" and data["result"] == 1:
+                    self._ota_in_progress = False
+                    self._firmware_version = self._available_version
+                    _LOGGER.info("[%s] OTA update has finished", self._device_id)
+                elif data["ota_state"] == "end" and data["ota_type"] == "update" and data["result"] != 1:
+                    _LOGGER.warning("[%s] OTA update has failed", self._device_id)
+                    self._ota_in_progress = False
+                elif data["ota_state"] == "end" and data["ota_type"] == "check" and data["result"] == 1:
+
+                    if "remote_version" in data:
+                        rmt_ver = data["remote_version"].split('.')
+                        if len(rmt_ver) == 3:
+                            self._available_version_int = 100 * int(rmt_ver[0]) + 10 * int(rmt_ver[1]) + int(rmt_ver[2])
+                            self._available_version = data["remote_version"]
+                            _LOGGER.debug("[%s] Available firmware version: %s", self._device_id, self._available_version)
+
+                    if "running_version" in data:
+                        run_ver = data["running_version"].split('.')
+                        if len(run_ver) == 3:
+                            self._firmware_version_int = 100 * int(run_ver[0]) + 10 * int(run_ver[1]) + int(run_ver[2])
+                            self._firmware_version = data["running_version"]
+                            _LOGGER.debug("[%s] Running firmware version: %s", self._device_id, self._firmware_version)
+            else:
+                _LOGGER.warning("[%s]: Malformatted OTA message received: %s", self._device_id, msg.payload)
+
+            if self._ota_callback != None:
+                self._ota_callback()
 
         _LOGGER.info("Subscribe to the topic %s", self.availability_topic)
         await mqtt.async_subscribe( self.hass, self.availability_topic, availability_received, self.qos )
@@ -244,6 +296,9 @@ class PixieCoordinator:
         _LOGGER.info("Subscribe to the topic %s", self.channel_topic)
         await mqtt.async_subscribe( self.hass, self.channel_topic, message_received, self.qos )
 
+        _LOGGER.info("Subscribe to the topic %s", self.ota_reply_topic)
+        await mqtt.async_subscribe( self.hass, self.ota_reply_topic, ota_message_received, self.qos )
+
         _LOGGER.info("Request the current state over the topic %s", self.request_topic)
         await mqtt.async_publish( self.hass, self.request_topic, "1", self.qos, False )
 
@@ -253,6 +308,14 @@ class PixieCoordinator:
     async def publish_command(self, message, qos, retain):
         _LOGGER.info("Publish a command %s to the topic %s", message, self.command_topic)
         await mqtt.async_publish( self.hass, self.command_topic, message, qos, retain )
+
+    async def ota_check(self):
+        _LOGGER.info("Check OTA availability: publish a request to the topic %s", self.ota_check_topic)
+        await mqtt.async_publish( self.hass, self.ota_check_topic, "1", 0, False )
+    
+    async def ota_perform(self):
+        _LOGGER.info("Perform OTA update: publish a request to the topic %s", self.ota_perform_topic)
+        await mqtt.async_publish( self.hass, self.ota_perform_topic, "1", 0, False )
 
     def device_id(self):
         return self._device_id
@@ -308,3 +371,14 @@ class PixieCoordinator:
     def url(self):
         return self._url
 
+    def available_version(self):
+        return self._available_version
+
+    def available_version_int(self):
+        return self._available_version_int
+
+    def firmware_version_int(self):
+        return self._firmware_version_int
+
+    def ota_in_progress(self):
+        return self._ota_in_progress

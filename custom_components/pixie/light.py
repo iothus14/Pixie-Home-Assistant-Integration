@@ -23,12 +23,10 @@ from homeassistant.components.light import (
     ATTR_RGBW_COLOR,
     ATTR_BRIGHTNESS,
     ATTR_EFFECT,
-    ATTR_WHITE_VALUE,
     PLATFORM_SCHEMA,
     SUPPORT_BRIGHTNESS,
     SUPPORT_COLOR,
     SUPPORT_EFFECT,
-    SUPPORT_WHITE_VALUE,
     SUPPORT_TRANSITION,
     COLOR_MODE_RGB,
     COLOR_MODE_RGBW,
@@ -53,6 +51,7 @@ from .const import (
     SERVICE_SET_RANDOM_EFFECT,
     SERVICE_TURN_ON_TRANSITION,
     SERVICE_TURN_OFF_TRANSITION,
+    SERVICE_CHECK_OTA,
     PIXIE_EFFECT_LIST,
     PIXIE_PICTURE_LIST,
     PIXIE_TRANSITION_LIST,
@@ -155,6 +154,12 @@ async def async_setup_entry(hass, config_entry, async_add_entities):
         "async_turn_off_transition",
     )
     
+    platform.async_register_entity_service(
+        SERVICE_CHECK_OTA,
+        { },
+        "async_check_ota",
+    )
+    
     # Add devices
     async_add_entities([light], True)
 
@@ -170,17 +175,6 @@ class PixieLight(LightEntity):
         self._channel = coordinator.channel()
         self._attr_unique_id = f"pixie_{self._device_id}_{self._channel}"
         self._attr_name = f"Pixie {self._device_id} {self._channel}"
-
-        #create_name = False
-        #if CONF_NAME in config_entry.data:
-        #    if config_entry.data[CONF_NAME] == "":
-        #        create_name = True
-        #    else:
-        #        self._attr_name = config_entry.data[CONF_NAME]
-        #else:
-        #    create_name = True
-        #if create_name:
-        #    self._attr_name = f"Pixie {self._device_id} {self._channel}"
 
         self.qos = 0
         self.retain = False
@@ -375,6 +369,11 @@ class PixieLight(LightEntity):
         await self._coordinator.publish_command(json.dumps(message), self.qos, self.retain)
 
 
+    async def async_check_ota(self, **kwargs):
+        """Check available OTA update for a Pixie device."""
+        await self._coordinator.ota_check()
+
+
     @property
     def brightness(self):
         """Return brightness"""
@@ -472,6 +471,6 @@ class PixieLight(LightEntity):
             ATTR_MANUFACTURER: "iothus14",
             ATTR_MODEL: "Pixie",
             ATTR_SW_VERSION: self._coordinator.firmware_version(),
-            "configuration_url": f"http://{self._coordinator.ip_addr()}"
+            "configuration_url": f"http://pixie-{self._coordinator.device_id()}.local"
         }
 

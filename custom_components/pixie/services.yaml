@@ -312,3 +312,11 @@ turn_off_transition:
         number:
           min: 0
           max: 255
+
+check_ota:
+  name: Check available OTA update
+  description: Check available OTA update.
+  target:
+    entity:
+      integration: pixie
+      domain: light

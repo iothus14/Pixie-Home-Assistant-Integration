@@ -5,7 +5,7 @@ DOMAIN = "pixie"
 CONF_DEVICE_ID = "device_id"
 CONF_CHANNEL = "channel"
 CONF_NAME = "name"
-
+ 
 PIXIE_ATTR_STATE = "state"
 PIXIE_ATTR_PICTURE = "picture"
 PIXIE_ATTR_TRANSITION_NAME = "transition_name"
@@ -27,6 +27,7 @@ SERVICE_SET_RANDOM_EFFECT = "set_random_effect"
 SERVICE_SET_PICTURE = "set_picture"
 SERVICE_TURN_ON_TRANSITION = "turn_on_transition"
 SERVICE_TURN_OFF_TRANSITION = "turn_off_transition"
+SERVICE_CHECK_OTA = "check_ota"
 
 
 PIXIE_EFFECT_LIST = [
