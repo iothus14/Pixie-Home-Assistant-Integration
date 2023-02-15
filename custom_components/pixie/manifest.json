@@ -1,12 +1,12 @@
 {
   "domain": "pixie",
   "name": "Pixie",
-  "documentation": "https://github.com/iothus14/Pixie",
-  "issue_tracker":"https://github.com/iothus14/Pixie/issues",
+  "documentation": "https://github.com/iothus14/Pixie-Home-Assistant-Integration",
+  "issue_tracker":"https://github.com/iothus14/Pixie-Home-Assistant-Integration/issues",
   "dependencies": ["mqtt"],
   "codeowners": ["iothus14"],
   "requirements": [],
   "iot_class": "local_push",
-  "version": "0.1.0",
+  "version": "0.3.0",
   "config_flow": true
 }
