@@ -80,6 +80,10 @@ set_effect:
             - "Particles"
             - "Curtains"
             - "Scanner"
+            - "OscillatingRainbow"
+            - "FlyingColorsUp"
+            - "FlyingColorsDown"
+            - "Waves"
     parameter1:
       name: Parameter 1
       description: The parameter1 defines a speed of the effect. It's a number between 0 and 255.

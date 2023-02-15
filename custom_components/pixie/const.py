@@ -97,6 +97,10 @@ PIXIE_EFFECT_LIST = [
     "Particles",
     "Curtains",
     "Scanner",
+    "OscillatingRainbow",
+    "FlyingColorsUp",
+    "FlyingColorsDown",
+    "Waves",
 ]
 
 PIXIE_PICTURE_LIST = [
