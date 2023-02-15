@@ -266,6 +266,8 @@ class PixieCoordinator:
                 elif data["ota_state"] == "end" and data["ota_type"] == "update" and data["result"] != 1:
                     _LOGGER.warning("[%s] OTA update has failed", self._device_id)
                     self._ota_in_progress = False
+                elif data["ota_state"] == "end" and data["ota_type"] == "check" and data["result"] != 1:
+                    _LOGGER.warning("[%s] OTA check update has failed", self._device_id)
                 elif data["ota_state"] == "end" and data["ota_type"] == "check" and data["result"] == 1:
 
                     if "remote_version" in data:
