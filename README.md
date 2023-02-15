@@ -1,4 +1,4 @@
-# Home Assistant Integration for a Pixie LED Controller
+# Pixie LED Controller (Home Assistant Integration)
 
 This is a custom component to support a Pixie LED controller in Home Assistant.
 
@@ -173,6 +173,16 @@ data:
 ```
 
 Please check the documentation for all supported animations, pictures and transitions.
+
+### Service pixie.check_ota
+
+(since verion 0.3.0)
+The service checks if there is an available firmware update. If there is a new firware version available Home Assistant will provide a possibility to perform the update directly in Home Assistant UI.
+
+|Service data attribute    | Optional  | Description                        |
+|--------------------------|-----------|------------------------------------|
+| **entity_id**            | No        | Entity Id of a pixie device.       |
+
 
 ### Sensors
 
