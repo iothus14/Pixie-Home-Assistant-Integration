@@ -35,14 +35,12 @@ from .const import (
     PIXIE_TRANSITION_LIST,
 )
 
-PLATFORMS = (LIGHT_DOMAIN, SELECT_DOMAIN, SENSOR_DOMAIN, UPDATE_DOMAIN)
+PLATFORMS = [LIGHT_DOMAIN, SELECT_DOMAIN, SENSOR_DOMAIN, UPDATE_DOMAIN]
 
 _LOGGER = logging.getLogger(__name__)
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     """Set up a pixie light from a config entry."""
-    hass.config_entries.async_setup_platforms(entry, PLATFORMS)
-    #await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
     _LOGGER.info("Set up entry: entry_id: %s;", entry.entry_id)
 
@@ -50,8 +48,11 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     hass.data[DOMAIN][entry.entry_id] = entry.data
 
     coordinator = PixieCoordinator(hass, entry)
-    c_key = f"coordinator_{entry.entry_id}"
-    hass.data[DOMAIN][c_key] = coordinator
+    ##c_key = f"coordinator_{entry.entry_id}"
+    ##hass.data[DOMAIN][c_key] = coordinator
+    hass.data.setdefault(DOMAIN, {})[entry.entry_id] = coordinator
+
+    await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS) ##
 
     return True
 

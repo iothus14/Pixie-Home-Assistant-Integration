@@ -55,6 +55,7 @@ from .const import (
 _LOGGER = logging.getLogger(__name__)
 
 class PixieCoordinator:
+    """Class to manage fetching Pixie data from a single endpoint"""
     def __init__(self, hass, config_entry):
         self.hass = hass
 
@@ -76,7 +77,7 @@ class PixieCoordinator:
         self._ip_addr = None
         self._mac = None
         self._url = None
-        
+ 
         self._available_version = None
         self._available_version_int = 0
         self._firmware_version_int = 0

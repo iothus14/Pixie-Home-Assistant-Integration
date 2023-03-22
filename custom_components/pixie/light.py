@@ -82,8 +82,9 @@ async def async_setup_platform(hass, config, async_add_entities, discovery_info=
 async def async_setup_entry(hass, config_entry, async_add_entities):
     """Add a pixie light from a config entry."""
 
-    c_key = f"coordinator_{config_entry.entry_id}"
-    coordinator = hass.data[DOMAIN][c_key]
+    ##c_key = f"coordinator_{config_entry.entry_id}"
+    ##coordinator = hass.data[DOMAIN][c_key]
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
     light = PixieLight(coordinator)
 
     platform = entity_platform.async_get_current_platform()
